@@ -238,6 +238,54 @@ def ask():
         logger.error(f"Error in ask endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/auto_complete', methods=['POST'])
+def auto_complete():
+    try:
+        data = request.json
+        text = data.get('text')
+        conversation_id = data.get('conversation_id')
+
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        # 获取或创建对话
+        conversation = None
+        if conversation_id:
+            conversation = Conversation.query.get_or_404(conversation_id)
+        else:
+            conversation = Conversation(title="新对话")
+            db.session.add(conversation)
+            db.session.commit()
+
+        # 构建消息历史
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant. Please provide clear and concise responses in Chinese."}
+        ]
+
+        # 添加历史消息
+        for msg in conversation.messages:
+            messages.append({"role": msg.role, "content": msg.content})
+
+        # 添加最新的用户消息
+        messages.append({"role": "user", "content": text})
+
+        # 调用 DeepSeek API 进行续写
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=messages,
+            max_tokens=50,  # 限制续写长度
+            temperature=0.7,
+            stream=False
+        )
+
+        completion = response.choices[0].message.content if response.choices else ""
+        
+        return jsonify({"completion": completion})
+
+    except Exception as e:
+        logger.error(f"Error in auto_complete: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 # 提供静态资源
 @app.route('/static/<path:filename>')
 def serve_static(filename):
