@@ -543,6 +543,7 @@ async function autoComplete(text) {
     }
 }
 
+// 渲染内容
 function renderContent() {
     const input = document.getElementById('user-input');
     const contentDiv = document.createElement('div');
@@ -550,4 +551,9 @@ function renderContent() {
     contentDiv.innerHTML = marked.parse(input.value); // 使用 marked 处理输入内容
     
     processCodeBlocks(contentDiv); // 调用处理代码块的函数
+
+    // 添加 MathJax 渲染
+    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+        window.MathJax.typeset();
+    }
 }
