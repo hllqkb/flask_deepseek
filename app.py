@@ -6,6 +6,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from datetime import datetime
+from flasgger import Swagger
 
 # 配置日志
 logging.basicConfig(level=logging.DEBUG)
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 app = Flask(__name__)
+swagger = Swagger(app)
 
 # 数据库配置 - 使用 SQLite
 db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deepseek_chat.db')
@@ -290,6 +292,36 @@ def auto_complete():
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory(app.static_folder, filename)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    """
+    预测接口
+    ---
+    parameters:
+      - name: data
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            data:
+              type: array
+              items:
+                type: number
+    responses:
+      200:
+        description: 预测结果
+        schema:
+          type: object
+          properties:
+            result:
+              type: number
+    """
+    data = request.json['data']
+    # 这里添加您的模型推理逻辑
+    result = sum(data)  # 示例逻辑
+    return jsonify({'result': result})
 
 if __name__ == '__main__':
     app.run(debug=True)
